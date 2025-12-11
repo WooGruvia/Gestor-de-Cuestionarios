@@ -20,7 +20,6 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
-    "http2-express-bridge": "^1.0.7",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {

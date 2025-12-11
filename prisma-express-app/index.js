@@ -1,19 +1,15 @@
-const http2 = require('http2'); 
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const express = require('express');
-const http2Express = require('http2-express-bridge'); 
-const app = http2Express(express);
-const miAppVieja = require('./src/app');
-app.use('/', miAppVieja);
+const app = require('./src/app'); 
+
+const PORT = 3443;
+
 const options = {
     key: fs.readFileSync(path.join(__dirname, 'server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'server.cert')),
-    allowHTTP1: true 
+    cert: fs.readFileSync(path.join(__dirname, 'server.cert'))
 };
-const PORT = 3000;
-const server = http2.createSecureServer(options, app);
 
-server.listen(PORT, () => {
-    console.log(`✅ Servidor HTTP/2 Seguro corriendo en: https://localhost:${PORT}`);
+https.createServer(options, app).listen(PORT, () => {
+    console.log(`✅ Servidor Seguro (HTTPS) corriendo en: https://localhost:${PORT}`);
 });
