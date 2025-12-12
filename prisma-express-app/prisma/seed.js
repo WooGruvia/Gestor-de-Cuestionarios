@@ -4,11 +4,10 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Se esta iniciando seed de la base de datos...');
-  console.log('='.repeat(20));
+  console.log('Se esta iniciando seed de la base de datos.');
+  console.log('='.repeat(50));
 
-  //LIMPIAR BASE DE DATOS
-  console.log('Limpiando base de datos...');
+  console.log('Limpiando la base de datos.');
   
   await prisma.dificultad.deleteMany();
   await prisma.rangoEdad.deleteMany();
@@ -17,10 +16,11 @@ async function main() {
   await prisma.usuario.deleteMany();
   
   console.log('Base de datos limpiada');
+  console.log('='.repeat(50));
 
 
   //CREAR USUARIOS
-  console.log('Creando usuarios...');
+  console.log('- Creando usuarios -');
 
   const usuarios = await Promise.all([
     prisma.usuario.create({
@@ -57,7 +57,7 @@ async function main() {
   
 
   //CREAR CATEGORIAS CON SUBCATEGORIAS
-  console.log('Creando categorias y subcategorias...');
+  console.log('- Creando categorias y subcategorias -');
 
   // Categoria 1: Matematicas
   await prisma.categoria.create({
@@ -143,11 +143,11 @@ async function main() {
   const totalSubcategorias = categorias.reduce((sum, cat) => sum + cat.subcategorias.length, 0);
   console.log(`${categorias.length} categorias creadas.`);
   console.log(`${totalSubcategorias} subcategorias creadas.`);
-  console.log('='.repeat(20));
+  console.log('='.repeat(50));
 
 
   //CREAR RANGOS DE EDAD CON DIFICULTADES
-  console.log('Creando rangos de edad y dificultades...');
+  console.log('- Creando rangos de edad y dificultades -');
 
   // Rango 1: 6-8 años
   await prisma.rangoEdad.create({
