@@ -35,3 +35,12 @@ model Dificultad {
   rangoEdadId  Int
   rangoEdad    RangoEdad @relation(fields: [rangoEdadId], references: [id])
 }
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String  
+  nombre    String?
+  rol       String   @default("ESTUDIANTE") 
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
