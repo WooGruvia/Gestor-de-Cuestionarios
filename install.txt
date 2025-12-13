@@ -1,0 +1,491 @@
+===========================================================================================
+ MANUAL DE DESPLIEGUE - SERVIDOR SEGURO HTTPS
+===========================================================================================
+Este proyecto no incluye credenciales ni certificados en el repositorio por seguridad. 
+Siga estos pasos detallados para configurar el entorno localmente.
+
+===========================================================================================
+ PASO 1: DESCARGA Y PREPARACION
+===========================================================================================
+Abra su terminal y ejecute los siguientes comandos para descargar el código e instalar las librerías.
+
+>> SI USA TERMINAL LINUX / MACOS (O GIT BASH):
+$ git clone https://github.com/WooGruvia/Gestor-de-Cuestionarios.git
+$ cd Gestor-de-Cuestionarios
+$ cd prisma-express-app
+$ npm install
+
+>> SI USA POWERSHELL (WINDOWS):
+PS C:\> git clone https://github.com/WooGruvia/Gestor-de-Cuestionarios.git
+PS C:\> cd Gestor-de-Cuestionarios
+PS C:\Gestor-de-Cuestionarios> cd prisma-express-app
+PS C:\Gestor-de-Cuestionarios\prisma-express-app> npm install
+===========================================================================================
+ PASO 2: BASE DE DATOS Y VISUALIZACION (SEED AUTOMATICO)
+===========================================================================================
+El sistema requiere configuración local y generará datos de prueba automáticamente.
+-------------------------------------------------------------------------------------------
+1. CONFIGURACION (.ENV)
+   Dentro de la carpeta "prisma-express-app", cree un archivo llamado ".env" (solo la extensión) Puedes hacerlo desde Git Bash con:
+$ touch .env
+
+Abrir el .env con un editor de texto y agregar esta línea:
+
+   DATABASE_URL="file:./dev.db"
+
+**Esto le dice a Prisma: “la base de datos SQLite se llamará dev.db y estará en esta carpeta”.**
+-------------------------------------------------------------------------------------------
+2. CREACION Y POBLADO DE DATOS (SEED)
+   Ejecute el comando correspondiente a su terminal para crear las tablas y llenar los datos de prueba:
+
+   >> SI USA TERMINAL LINUX / MACOS (O GIT BASH):
+   $ npx prisma migrate dev --name init
+
+   >> SI USA POWERSHELL (WINDOWS):
+   PS > npx prisma migrate dev --name init
+
+¿QUÉ HACE ESTE COMANDO?
+Al ejecutar este comando, Prisma realizará automáticamente dos acciones:
+   a) Creará las tablas de la base de datos según el esquema definido.
+   b) Ejecutará el script de poblado: `node prisma/seed.js`
+   
+IMPORTANTE: Observe la consola. Verá mensajes similares a estos:
+
+   Running seed command `node prisma/seed.js` ...
+   Se esta iniciando seed de la base de datos.
+   ==================================================
+   Limpiando la base de datos.
+   Base de datos limpiada
+   - Creando usuarios -
+   3 usuarios creados.
+   ==================================================
+   - Creando categorias y subcategorias -
+   5 categorias creadas.
+   17 subcategorias creadas.
+   ==================================================
+   - Creando rangos de edad y dificultades -
+   4 rangos de edad creados.
+   12 niveles de dificultad creados.
+
+   The seed command has been executed.
+
+
+Esto confirma que se han creado automáticamente:
+   - 3 Usuarios de prueba (Admin, Profesor, Estudiante)
+   - 5 Categorías principales
+   - 17 Subcategorías
+   - Rangos de edad y niveles de dificultad
+-------------------------------------------------------------------------------------------
+3. VERIFICACION VISUAL (PRISMA STUDIO)
+   Para ver y administrar estos datos en una interfaz gráfica, ejecute en la misma terminal:
+
+   >> EN CUALQUIER TERMINAL:
+   npx prisma studio
+
+   Esto abrirá automáticamente su navegador en http://localhost:5555 mostrando todas las tablas.
+
+===========================================================================================
+ PASO 3: GENERACION DE CERTIFICADOS DE SEGURIDAD
+===========================================================================================
+Este paso es diferente según su sistema operativo. Puede crear sus certificados individualmente, o si quiere puede, elegir la opción que corresponda a su equipo para poder generar los certificados correspondientes.
+
+OPCION A: SI USA WINDOWS (GIT BASH)
+Abra la terminal Git Bash en la carpeta del proyecto. Debería verse así:
+
+User@PC MINGW64 ~/Desktop/Gestor-de-Cuestionarios/prisma-express-app
+$ openssl req -nodes -new -x509 -keyout server.key -out server.cert -days 365 -subj "//C=BO\ST=Cochabamba\L=Cochabamba\O=Universidad\OU=Sistemas\CN=localhost"
+
+OPCION B: SI USA MACOS O LINUX (TERMINAL NORMAL)
+Abra su terminal. Debería verse así:
+
+user@macbook:~/Gestor-de-Cuestionarios/prisma-express-app$
+openssl req -nodes -new -x509 -keyout server.key -out server.cert -days 365 -subj "/C=BO/ST=Cochabamba/L=Cochabamba/O=Universidad/OU=Sistemas/CN=localhost"
+
+(Esto generará los archivos server.key y server.cert necesarios).
+
+===========================================================================================
+ PASO 4: EXPLICACION TECNICA (CONFIGURACION EXPRESS)
+===========================================================================================
+Para su revisión: El archivo "index.js" captura estos certificados utilizando el módulo "fs" y "path" de Node.js.
+
+La configuración se encuentra en las líneas iniciales de index.js:
+
+const options = {
+    key: fs.readFileSync(path.join(__dirname, 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'server.cert')),
+    allowHTTP1: true
+};
+
+Esto asegura que Express cargue las credenciales desde la ruta relativa correcta antes de iniciar el servidor HTTP/2.
+
+===========================================================================================
+ PASO 5: EJECUCION
+===========================================================================================
+Inicie el servidor con el siguiente comando:
+
+>> SI USA TERMINAL LINUX / MACOS:
+$ npm start
+
+>> SI USA POWERSHELL (WINDOWS):
+PS C:\...\prisma-express-app> npm start
+
+La consola confirmará con el siguiente mensaje: Servidor (HTTPS) Seguro corriendo en https://localhost:3443
+
+===========================================================================================
+ PASO 6: VERIFICACION
+===========================================================================================
+1. Abra su navegador en: https://localhost:3443
+2. Acepte la alerta de seguridad (Configuración avanzada > Continuar).
+3. Si todo esta correcto le aparecerá el siguiente mensaje en pantalla: Hola Mundo desde Express!
+4. Abra el Inspector (F12) > Pestaña Red > Verifique que la columna Protocolo diga "h2".
+===========================================================================================
+
+
+
+
+
+===========================================================================================
+ 	GUIA DE PRUEBAS - POSTMAN API REST
+===========================================================================================
+Esta guía contiene las pruebas esenciales para verificar el funcionamiento correcto del
+sistema de gestión de cuestionarios. Ejecute las pruebas en orden.
+===========================================================================================
+ FASE 1: AUTENTICACION Y GESTION DE USUARIOS
+===========================================================================================
+-------------------------------------------------------------------------------------------
+REGISTRAR UN NUEVO USUARIO
+-------------------------------------------------------------------------------------------
+Método:   POST
+URL:      https://localhost:3443/api/auth/register
+
+Body (JSON):
+{
+  "email": "profesor2@test.com",
+  "password": "password123",
+  "nombre": "Luisa Profesora",
+  "rol": "PROFESOR"
+}
+
+Resultado esperado: 
+{
+    "mensaje": "Usuario creado exitosamente",
+    "email": "profesor2@test.com"
+}
+
+-------------------------------------------------------------------------------------------
+INICIAR SESION - ADMIN
+-------------------------------------------------------------------------------------------
+Método:   POST
+URL:      https://localhost:3443/api/auth/login
+
+Body (JSON):
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+
+Resultado esperado: 
+{
+    "mensaje": "Login exitoso",
+    "rol": "ADMIN"
+}
+
+*NOTA: Se autentifica con los datos correctos y el token que esta en la cookie "access_token"*
+
+-------------------------------------------------------------------------------------------
+VER TODOS LOS USUARIOS (REQUIERE ROL ADMIN)
+-------------------------------------------------------------------------------------------
+Método:   GET
+URL:      https://localhost:3443/api/users
+
+Resultado esperado: 
+- Lista completa de usuarios registrados
+
+-------------------------------------------------------------------------------------------
+VER UN USUARIO ESPECIFICO
+-------------------------------------------------------------------------------------------
+Método:   GET
+URL:      https://localhost:3443/api/users/1
+
+NOTA: Cambie el "1" por el ID del usuario que desea consultar.
+
+Resultado esperado: 
+- Datos del usuario solicitado
+
+-------------------------------------------------------------------------------------------
+ACTUALIZAR UN USUARIO (REQUIERE ADMIN)
+-------------------------------------------------------------------------------------------
+Método:   PUT
+URL:      https://localhost:3443/api/users/4
+
+Body (JSON):
+{
+  "nombre": "Luisa Profesora Actualizado",
+  "activo": true
+}
+
+Resultado esperado: 
+- Datos del usuario ya actualizados
+
+-------------------------------------------------------------------------------------------
+ELIMINAR UN USUARIO (REQUIERE ADMIN)
+-------------------------------------------------------------------------------------------
+Método:   DELETE
+URL:      https://localhost:3443/api/users/1
+
+Resultado esperado: 
+- Mensaje confirmando la desactivación de ese usuario
+
+
+===========================================================================================
+ FASE 2: GESTION DE CATEGORIAS (REQUIERE ADMIN)
+===========================================================================================
+-------------------------------------------------------------------------------------------
+CREAR UNA CATEGORIA
+-------------------------------------------------------------------------------------------
+Método:   POST
+URL:      https://localhost:3443/api/categorias
+
+Body (JSON):
+{
+  "nombre": "Arte",
+  "descripcion": "Categoría de artes"
+}
+
+Resultado esperado: 
+-Mensaje mostrando la creación de esa categoría
+{
+    "id": 6,
+    "nombre": "Arte",
+    "descripcion": "Categoría de artes",
+    "fecha_creacion": "2025-12-13T01:57:54.533Z",
+    "activo": true
+}
+-------------------------------------------------------------------------------------------
+VER TODAS LAS CATEGORIAS (Tiene que estar logueado, todos los roles tienen acceso a esa solicitud)
+-------------------------------------------------------------------------------------------
+Método:   GET
+URL:      https://localhost:3443/api/categorias
+
+Resultado esperado: 
+- Lista de todas las categorías incluyendo "Arte"
+
+-------------------------------------------------------------------------------------------
+ACTUALIZAR UNA CATEGORIA
+-------------------------------------------------------------------------------------------
+Método:   PUT
+URL:      https://localhost:3443/api/categorias/1
+
+Body (JSON):
+{
+  "nombre": "Arte Actualizado",
+  "activo": true
+}
+
+Resultado esperado: 
+- Categoría actualizada con el nuevo nombre
+
+-------------------------------------------------------------------------------------------
+ELIMINAR UNA CATEGORIA
+-------------------------------------------------------------------------------------------
+Método:   DELETE
+URL:      https://localhost:3443/api/categorias/1
+
+Resultado esperado: 
+{
+    "message": "Categoria eliminada exitosamente"
+}
+
+===========================================================================================
+ FASE 3: GESTION DE SUBCATEGORIAS (REQUIERE ROL ADMIN)
+===========================================================================================
+Primero, necesita saber el ID de la categoría a la cual esta asociada la sub categoría que quieres crear/visualizar/eliminar/actualizar
+-------------------------------------------------------------------------------------------
+CREAR UNA SUBCATEGORIA
+-------------------------------------------------------------------------------------------
+Método:   POST
+URL:      https://localhost:3443/api/subcategorias
+
+Body (JSON):
+{
+  "nombre": "Álgebra Lineal",
+  "descripcion": "Vectores y matrices",
+  "categoriaId": 1
+}
+
+Resultado esperado: 
+{
+    "id": 18,
+    "nombre": "Álgebra Lineal",
+    "descripcion": "Vectores y matrices",
+    "fecha_creacion": "2025-12-13T02:11:59.931Z",
+    "activo": true,
+    "categoriaId": 1,
+    "categoria": {
+        "id": 1,
+        "nombre": "Matemáticas",
+        "descripcion": "Problemas matemáticos",
+        "fecha_creacion": "2025-12-12T21:12:18.834Z",
+        "activo": true
+    }
+}
+
+-------------------------------------------------------------------------------------------
+VER TODAS LAS SUBCATEGORÍAS (PÚBLICO/LOGUEADO)
+-------------------------------------------------------------------------------------------
+Método:   GET
+URL:      https://localhost:3443/api/subcategorias
+
+Resultado esperado: 
+- Deberá ver la lista completa incluyendo de las sub categorías (asociadas a sus categorías), incluyendo también la ultima creada "Álgebra Lineal"
+
+-------------------------------------------------------------------------------------------
+ACTUALIZAR UNA SUBCATEGORIA
+-------------------------------------------------------------------------------------------
+Método:   PUT
+URL:      https://localhost:3443/api/subcategorias/18
+
+Body (JSON):
+{
+  "nombre": "Álgebra Lineal Avanzada",
+  "activo": true
+}
+
+Resultado esperado: 
+- El nombre debería aparecer actualizado en la respuesta
+
+-------------------------------------------------------------------------------------------
+ELIMINAR UNA SUBCATEGORIA
+-------------------------------------------------------------------------------------------
+Método:   DELETE
+URL:      https://localhost:3443/api/subcategorias/18
+
+Resultado esperado: 
+{
+    "message": "Subcategoria eliminada exitosamente"
+}
+
+===========================================================================================
+ FASE 4: TABLAS AUXILIARES (DIFICULTAD Y RANGO DE EDAD)
+===========================================================================================
+Estas tablas son estáticas y fueron creadas automáticamente con el script seed.js.
+Las siguientes pruebas verifican su existencia.
+
+-------------------------------------------------------------------------------------------
+VER NIVELES DE DIFICULTAD
+-------------------------------------------------------------------------------------------
+Método:   GET
+URL:      https://localhost:3443/api/dificultades
+
+Resultado esperado: 
+- Deberá ver la lista de niveles de dificultad,vera niveles como: "Fácil", "Medio", "Difícil"
+
+-------------------------------------------------------------------------------------------
+VER RANGOS DE EDAD
+-------------------------------------------------------------------------------------------
+Método:   GET
+URL:      https://localhost:3443/api/rangos-edad
+
+Resultado esperado: 
+- Deberá ver la lista de rangos de edad, vera rangos como: "6-8 años", "9-11 años", "12-14 años", "15-18 años"
+
+===========================================================================================
+ FASE 5: PRUEBAS DE ERROR (VALIDACIONES)
+===========================================================================================
+Es fundamental verificar que el sistema maneje correctamente los casos de error.
+-------------------------------------------------------------------------------------------
+ERROR: INTENTAR CREAR USUARIO CON EMAIL REPETIDO
+-------------------------------------------------------------------------------------------
+Método:   POST
+URL:      https://localhost:3443/api/auth/register
+
+Body (JSON):
+{
+  "email": "admin@gmail.com",
+  "password": "intruso123",
+  "nombre": "Intruso",
+  "rol": "ADMIN"
+}
+
+Resultado esperado: 
+{
+    "error": "Error al registrar: El email ya existe o datos incorrectos"
+}
+
+-------------------------------------------------------------------------------------------
+ERROR: BUSCAR RECURSO QUE NO EXISTE (404)
+-------------------------------------------------------------------------------------------
+Intente buscar un usuario con un ID que no existe (ejemplo: 9999).
+
+Método:   GET
+URL:      https://localhost:3443/api/users/9999
+
+Headers:
+Authorization: Bearer {su_token_aqui}
+
+Resultado esperado: 
+- Código: 404 Not Found
+- Mensaje: "Usuario no encontrado" (o similar)
+
+-------------------------------------------------------------------------------------------
+ERROR: ACCESO NO AUTORIZADO (SIN LOGUEARSE-SIN TOKEN)
+-------------------------------------------------------------------------------------------
+Intente acceder a un endpoint protegido sin haberte logueado (sin enviar el token de autenticación).
+
+Método:   GET
+URL:      https://localhost:3443/api/users
+
+Resultado esperado: 
+{
+    "error": "Acceso denegado. No se proporciono token de autenticacion"
+}
+-------------------------------------------------------------------------------------------
+ERROR: ACCESO PROHIBIDO (ROL INCORRECTO- ACCIONES QUE SOLO SON PARA EL ROL ADMIN)
+-------------------------------------------------------------------------------------------
+Inicie sesión como ESTUDIANTE e intente crear una categoría (acción exclusiva de ADMIN).
+
+PASO 1: Login como estudiante:
+Método:   POST
+URL:      https://localhost:3443/api/auth/login
+
+Body (JSON):
+{
+  "email": "estudiante1@gmail.com",
+  "password": "estudiante123"
+}
+
+PASO 2: Intente crear categoría con el token de estudiante:
+Método:   POST
+URL:      https://localhost:3443/api/categorias
+
+Body (JSON):
+{
+  "nombre": "Intento de Categoría",
+  "descripcion": "No debería funcionar"
+}
+
+Resultado esperado: 
+{
+    "error": "Acceso denegado. Solo puede hacerlo: ADMIN",
+    "tuRol": "ESTUDIANTE"
+}
+
+IMPORTANTE: Esto mismo pasara para las siguientes solicitudes:
+
+1)Intentar con el token de estudiante: Listar todos los usuarios, ver un usuario en specífico, eliminar, actualizar y crear un usuario.
+2)Intentar con el token de estudiante: Crear, eliminar y actualizar una categoría.
+3)Intentar con el token de estudiante: Crear, eliminar y actualizar una sub categoría.
+4)Intentar con el token de estudiante: Crear, eliminar y actualizar un rango de edad.
+5)Intentar con el token de estudiante: Crear, eliminar y actualizar un nivel de dificultad.
+
+===========================================================================================
+PARA CERRAR SESION
+===========================================================================================
+Método:   POST
+URL:      https://localhost:3443/api/auth/logout
+
+Resultado esperado: 
+{
+    "mensaje": "Sesion cerrada correctamente"
+}
+
